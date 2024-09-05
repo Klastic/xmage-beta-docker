@@ -6,7 +6,7 @@ on:
       - '**'
 
 env:
-  IMAGE_NAME: goesta/xmage-beta
+  IMAGE_NAME: klastic/xmage-beta
 
 jobs:
   build:
