@@ -2,7 +2,7 @@
 
 This Project automates the creation of Docker Images for beta versions of [XMage](https://github.com/magefree/mage) Server.
 
-You can find the Images at Docker Hub: https://hub.docker.com/r/goesta/xmage-beta
+You can find the Images at Docker Hub: https://hub.docker.com/r/klastic/xmage-beta
 
 All Images are taged with the version number. So you can run older beta versions by including the tag when creating the container. You can see all available tags on the dockerhub page or on our github page under tags.
 
@@ -14,7 +14,7 @@ Currently the Images are based on alpine and openjdk8. If you would like to see 
         -p 17179:17179 \
         --add-host example.com:0.0.0.0 \
         -e "XMAGE_DOCKER_SERVER_ADDRESS=example.com" \
-        goesta/xmage-beta
+        klastic/xmage-beta
 
 
 XMage needs to know the domain name of the server it is running on. The `--add-host` option adds an entry to the containers `/etc/hosts` file for this domain. 
@@ -31,7 +31,7 @@ If you like to preserve the database during updates and restarts you can mount a
     version: '2'
     services:
     mage:
-        image: goesta/xmage-beta
+        image: klastic/xmage-beta
         ports:
          - "17171:17171"
          - "17179:17179"
@@ -51,9 +51,6 @@ If you like to preserve the database during updates and restarts you can mount a
         xmage-saved:
             driver: local
 
-## Links
-
-[Tutorial - Running XMage on DigitalOcean](https://github.com/goesta/docker-xmage-alpine/wiki/DigitalOcean-Tutorial)
 
 ## Client
 

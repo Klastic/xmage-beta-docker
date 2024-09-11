@@ -6,7 +6,7 @@ on:
       - '**'
 
 env:
-  IMAGE_NAME: goesta/xmage-beta
+  IMAGE_NAME: klastic/xmage-beta
 
 jobs:
   build:
@@ -35,3 +35,19 @@ jobs:
           context: ./docker/alpine_openjdk8_from_beta
           push: true
           tags: ${{env.IMAGE_NAME}}:latest, ${{env.IMAGE_NAME}}:alpine, ${{env.IMAGE_NAME}}:openjdk8, ${{env.IMAGE_NAME}}:${{ env.TAG }}
+
+      - name: Redeploy Docker Stack via SSH
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.SWARM_MANAGER }}
+          username: ${{ secrets.SWARM_USER }}
+          key: ${{ secrets.SWARM_KEY }}
+          port: ${{ secrets.SWARM_PORT }}
+          script: |
+            git clone https://github.com/LostKode/docker-swarm-configs.git /tmp/repo
+            
+            cd /tmp/repo/
+            
+            docker stack deploy --compose-file xmage.yml xmage --with-registry-auth
+            
+            rm -rf /tmp/repo
