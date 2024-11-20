@@ -3,14 +3,13 @@ name: Build Docker Image
 on:
   push:
     tags:
-      - '**'
+      - "**"
 
 env:
   IMAGE_NAME: klastic/xmage-beta
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,7 +24,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-          
+
       - name: Get the tag name
         run: echo "TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
@@ -45,9 +44,6 @@ jobs:
           port: ${{ secrets.SWARM_PORT }}
           script: |
             git clone https://github.com/LostKode/docker-swarm-configs.git /tmp/repo
-            
             cd /tmp/repo/
-            
             docker stack deploy --compose-file xmage.yml xmage --with-registry-auth
-            
             rm -rf /tmp/repo
