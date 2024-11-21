@@ -43,7 +43,17 @@ jobs:
           key: ${{ secrets.SWARM_KEY }}
           port: ${{ secrets.SWARM_PORT }}
           script: |
-            git clone https://github.com/LostKode/docker-swarm-configs.git /tmp/repo
+            set -e
+            echo "Setting up SSH configuration..."
+            mkdir -p ~/.ssh
+            echo "${{ secrets.SWARM_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            echo "Cloning repository..."
+            git clone git@github.com:LostKode/docker-swarm-configs.git /tmp/repo || { echo "Git clone failed"; exit 1; }
+            echo "Deploying Docker stack..."
             cd /tmp/repo/
-            docker stack deploy --compose-file xmage.yml xmage --with-registry-auth
+            docker stack deploy --compose-file xmage.yml xmage --with-registry-auth || { echo "Docker stack deploy failed"; exit 1; }
+            echo "Cleaning up..."
             rm -rf /tmp/repo
+            echo "Deployment completed successfully."
