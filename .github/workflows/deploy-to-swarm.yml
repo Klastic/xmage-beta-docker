@@ -17,6 +17,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Test SSH connectivity first
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SWARM_MANAGER }}
+          username: ${{ secrets.SWARM_USER }}
+          key: ${{ secrets.SWARM_KEY }}
+          port: ${{ secrets.SWARM_PORT }}
+          timeout: 30s
+          command_timeout: 60s
+          debug: true
+          script: |
+            echo "SSH connection test successful!"
+            echo "Current user: $(whoami)"
+            echo "Current directory: $(pwd)"
+            echo "Docker version: $(docker --version || echo 'Docker not found')"
+            echo "System uptime: $(uptime)"
+
       - name: Deploy to Docker Swarm via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -24,17 +41,95 @@ jobs:
           username: ${{ secrets.SWARM_USER }}
           key: ${{ secrets.SWARM_KEY }}
           port: ${{ secrets.SWARM_PORT }}
-          timeout: 60s
-          command_timeout: 300s
+          timeout: 120s # Increased timeout
+          command_timeout: 600s # Increased command timeout
+          debug: true # Enable debug output
           script: |
             set -e
-            echo "Removing existing /tmp/repo directory if it exists..."
-            rm -rf /tmp/repo
-            echo "Cloning repository..."
-            git clone https://github.com/LostKode/docker-swarm-configs.git /tmp/repo || { echo "Git clone failed"; exit 1; }
-            echo "Deploying Docker stack..."
-            cd /tmp/repo/
-            docker stack deploy --compose-file xmage.yml xmage --with-registry-auth || { echo "Docker stack deploy failed"; exit 1; }
-            echo "Cleaning up..."
-            rm -rf /tmp/repo
-            echo "Deployment completed successfully."
+
+            # Function for logging with timestamps
+            log() {
+                echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+            }
+
+            # Function for error handling
+            handle_error() {
+                log "ERROR: $1"
+                exit 1
+            }
+
+            log "Starting deployment process..."
+
+            # Check if we have necessary tools
+            log "Checking prerequisites..."
+            which git > /dev/null || handle_error "Git not found"
+            which docker > /dev/null || handle_error "Docker not found"
+            docker info > /dev/null 2>&1 || handle_error "Cannot connect to Docker daemon"
+
+            # Clean up any existing directory
+            log "Cleaning up existing directories..."
+            if [ -d "/tmp/repo" ]; then
+                log "Removing existing /tmp/repo directory..."
+                rm -rf /tmp/repo || handle_error "Failed to remove existing /tmp/repo"
+            fi
+
+            # Clone the repository with retry logic
+            log "Cloning repository..."
+            RETRY_COUNT=0
+            MAX_RETRIES=3
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                if git clone https://github.com/LostKode/docker-swarm-configs.git /tmp/repo; then
+                    log "Repository cloned successfully"
+                    break
+                else
+                    RETRY_COUNT=$((RETRY_COUNT + 1))
+                    log "Clone attempt $RETRY_COUNT failed"
+                    if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+                        handle_error "Failed to clone repository after $MAX_RETRIES attempts"
+                    fi
+                    log "Retrying in 5 seconds..."
+                    sleep 5
+                fi
+            done
+
+            # Verify the cloned repository
+            log "Verifying cloned repository..."
+            cd /tmp/repo || handle_error "Failed to change to /tmp/repo directory"
+
+            if [ ! -f "xmage.yml" ]; then
+                log "Available files in repository:"
+                ls -la
+                handle_error "xmage.yml not found in repository"
+            fi
+
+            log "Found xmage.yml, contents preview:"
+            head -10 xmage.yml
+
+            # Check current Docker stack status
+            log "Checking current Docker stack status..."
+            if docker stack ls | grep -q "xmage"; then
+                log "Existing xmage stack found:"
+                docker stack services xmage || log "Failed to list existing services"
+            else
+                log "No existing xmage stack found"
+            fi
+
+            # Deploy the stack
+            log "Deploying Docker stack..."
+            if docker stack deploy --compose-file xmage.yml xmage --with-registry-auth; then
+                log "Docker stack deployed successfully"
+            else
+                handle_error "Docker stack deploy failed"
+            fi
+
+            # Verify deployment
+            log "Verifying deployment..."
+            sleep 10  # Give services time to start
+            docker stack services xmage || log "Warning: Could not list services after deployment"
+
+            # Clean up
+            log "Cleaning up..."
+            cd /
+            rm -rf /tmp/repo || log "Warning: Failed to clean up /tmp/repo"
+
+            log "Deployment completed successfully!"
