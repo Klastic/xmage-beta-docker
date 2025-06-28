@@ -1,0 +1,52 @@
+name: Keep Actions Alive
+
+on:
+  schedule:
+    # Run weekly on Sundays at 12:00 UTC
+    - cron: "0 12 * * 0"
+
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.BOT_GITHUB_PAT }}
+          fetch-depth: 0
+
+      - name: Check if keep-alive commit is needed
+        run: |
+          # Get the date of the last commit
+          LAST_COMMIT_DATE=$(git log -1 --format=%ct)
+          CURRENT_DATE=$(date +%s)
+          DAYS_SINCE_LAST_COMMIT=$(( (CURRENT_DATE - LAST_COMMIT_DATE) / 86400 ))
+
+          echo "Days since last commit: $DAYS_SINCE_LAST_COMMIT"
+
+          # If it's been 50+ days since last commit, create a keep-alive commit
+          if [ $DAYS_SINCE_LAST_COMMIT -ge 50 ]; then
+            echo "Repository has been inactive for $DAYS_SINCE_LAST_COMMIT days. Creating keep-alive commit..."
+            
+            # Configure git
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action Keep-Alive"
+            
+            # Create or update keep-alive file
+            mkdir -p .github
+            echo "Last keep-alive: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" > .github/keep-alive
+            echo "This file is automatically updated to keep GitHub Actions schedules active." >> .github/keep-alive
+            echo "GitHub disables scheduled workflows after 60 days of repository inactivity." >> .github/keep-alive
+            
+            # Commit and push
+            git add .github/keep-alive
+            git commit -m "chore: keep-alive commit to maintain scheduled workflows"
+            git push
+            
+            echo "✅ Keep-alive commit created and pushed."
+          else
+            echo "✅ Repository is active. No keep-alive commit needed."
+          fi
