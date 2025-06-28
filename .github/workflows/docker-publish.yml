@@ -35,28 +35,9 @@ jobs:
           push: true
           tags: ${{env.IMAGE_NAME}}:latest, ${{env.IMAGE_NAME}}:alpine, ${{env.IMAGE_NAME}}:openjdk8, ${{env.IMAGE_NAME}}:${{ env.TAG }}
 
-      - name: Redeploy Docker Stack via SSH
-        uses: appleboy/ssh-action@v0.1.5
+      - name: Trigger deployment workflow
+        uses: peter-evans/repository-dispatch@v2
         with:
-          host: ${{ secrets.SWARM_MANAGER }}
-          username: ${{ secrets.SWARM_USER }}
-          key: ${{ secrets.SWARM_KEY }}
-          port: ${{ secrets.SWARM_PORT }}
-          script: |
-            set -e
-            echo "Setting up SSH configuration..."
-            mkdir -p ~/.ssh
-            echo "${{ secrets.SWARM_KEY }}" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
-            echo "Adding GitHub to known_hosts..."
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
-            echo "Removing existing /tmp/repo directory if it exists..."
-            rm -rf /tmp/repo
-            echo "Cloning repository..."
-            git clone git@github.com:LostKode/docker-swarm-configs.git /tmp/repo || { echo "Git clone failed"; exit 1; }
-            echo "Deploying Docker stack..."
-            cd /tmp/repo/
-            docker stack deploy --compose-file xmage.yml xmage --with-registry-auth || { echo "Docker stack deploy failed"; exit 1; }
-            echo "Cleaning up..."
-            rm -rf /tmp/repo
-            echo "Deployment completed successfully."
+          token: ${{ secrets.BOT_GITHUB_PAT }}
+          event-type: deploy-to-swarm
+          client-payload: '{"tag": "${{ env.TAG }}", "image": "${{ env.IMAGE_NAME }}"}'

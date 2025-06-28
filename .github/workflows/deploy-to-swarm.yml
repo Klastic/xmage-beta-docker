@@ -1,0 +1,40 @@
+name: Deploy to Docker Swarm
+
+on:
+  repository_dispatch:
+    types: [deploy-to-swarm]
+
+  # Allow manual deployment
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Docker image tag to deploy"
+        required: false
+        default: "latest"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Docker Swarm via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SWARM_MANAGER }}
+          username: ${{ secrets.SWARM_USER }}
+          key: ${{ secrets.SWARM_KEY }}
+          port: ${{ secrets.SWARM_PORT }}
+          timeout: 60s
+          command_timeout: 300s
+          script: |
+            set -e
+            echo "Removing existing /tmp/repo directory if it exists..."
+            rm -rf /tmp/repo
+            echo "Cloning repository..."
+            git clone https://github.com/LostKode/docker-swarm-configs.git /tmp/repo || { echo "Git clone failed"; exit 1; }
+            echo "Deploying Docker stack..."
+            cd /tmp/repo/
+            docker stack deploy --compose-file xmage.yml xmage --with-registry-auth || { echo "Docker stack deploy failed"; exit 1; }
+            echo "Cleaning up..."
+            rm -rf /tmp/repo
+            echo "Deployment completed successfully."
