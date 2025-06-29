@@ -56,13 +56,24 @@ jobs:
                 rm -rf /tmp/repo || handle_error "Failed to remove existing /tmp/repo"
             fi
 
-            # Clone the repository with retry logic
+            # Setup SSH for private repo access with deploy key
+            log "Setting up SSH for GitHub access..."
+            mkdir -p ~/.ssh
+            chmod 700 ~/.ssh
+
+            # Add GitHub's SSH key to known_hosts
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+            # Create SSH key for GitHub configs repo
+            echo "${{ secrets.DOCKER_CONFIGS_DEPLOY_KEY }}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+
+            # Clone the repository with retry logic using SSH
             log "Cloning repository..."
             RETRY_COUNT=0
             MAX_RETRIES=3
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-                # Use BOT_GITHUB_PAT for private repo access
-                if git clone https://${{ secrets.DOCKER_CONFIGS_DEPLOY_KEY }}@github.com/LostKode/docker-swarm-configs.git /tmp/repo; then
+                if git clone git@github.com:LostKode/docker-swarm-configs.git /tmp/repo; then
                     log "Repository cloned successfully"
                     break
                 else
@@ -75,6 +86,9 @@ jobs:
                     sleep 5
                 fi
             done
+
+            # Clean up SSH key for security
+            rm -f ~/.ssh/id_rsa
 
             # Verify the cloned repository
             log "Verifying cloned repository..."
