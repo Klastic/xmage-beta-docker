@@ -62,7 +62,7 @@ jobs:
             MAX_RETRIES=3
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
                 # Use BOT_GITHUB_PAT for private repo access
-                if git clone https://${{ secrets.BOT_GITHUB_PAT }}@github.com/LostKode/docker-swarm-configs.git /tmp/repo; then
+                if git clone https://${{ secrets.DOCKER_CONFIGS_DEPLOY_KEY }}@github.com/LostKode/docker-swarm-configs.git /tmp/repo; then
                     log "Repository cloned successfully"
                     break
                 else
