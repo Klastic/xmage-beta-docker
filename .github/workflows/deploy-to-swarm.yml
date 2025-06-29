@@ -17,23 +17,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test SSH connectivity first
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.SWARM_MANAGER }}
-          username: ${{ secrets.SWARM_USER }}
-          key: ${{ secrets.SWARM_KEY }}
-          port: ${{ secrets.SWARM_PORT }}
-          timeout: 30s
-          command_timeout: 60s
-          debug: true
-          script: |
-            echo "SSH connection test successful!"
-            echo "Current user: $(whoami)"
-            echo "Current directory: $(pwd)"
-            echo "Docker version: $(docker --version || echo 'Docker not found')"
-            echo "System uptime: $(uptime)"
-
       - name: Deploy to Docker Swarm via SSH
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -78,7 +61,8 @@ jobs:
             RETRY_COUNT=0
             MAX_RETRIES=3
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-                if git clone https://github.com/LostKode/docker-swarm-configs.git /tmp/repo; then
+                # Use BOT_GITHUB_PAT for private repo access
+                if git clone https://${{ secrets.BOT_GITHUB_PAT }}@github.com/LostKode/docker-swarm-configs.git /tmp/repo; then
                     log "Repository cloned successfully"
                     break
                 else
