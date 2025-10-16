@@ -4,13 +4,7 @@ This directory contains documentation for troubleshooting and configuring the xm
 
 ## Quick Links
 
-### [!] Fix Issues Now
-
-- **[QUICK_FIX.md](./QUICK_FIX.md)** - 5-minute fix for authentication/automation failures
-  - Start here if workflows are currently failing
-  - Step-by-step instructions with direct links
-
-### [?] Troubleshooting
+### [!] Troubleshooting
 
 - **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Comprehensive troubleshooting guide
   - Authentication failures
@@ -28,7 +22,7 @@ This directory contains documentation for troubleshooting and configuring the xm
 
 ## Common Issues
 
-- **Authentication Errors** - See [QUICK_FIX.md](./QUICK_FIX.md) for expired `BOT_GITHUB_PAT`
+- **Authentication Errors** - See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for expired `BOT_GITHUB_PAT`
 - **Docker Build Failures** - Check Docker Hub credentials in [SECRETS.md](./SECRETS.md)
 - **Deployment Issues** - Verify swarm secrets in [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 - **Other Problems** - Full troubleshooting in [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
