@@ -4,13 +4,13 @@ This directory contains documentation for troubleshooting and configuring the xm
 
 ## Quick Links
 
-### 🚨 Fix Issues Now
+### [!] Fix Issues Now
 
 - **[QUICK_FIX.md](./QUICK_FIX.md)** - 5-minute fix for authentication/automation failures
   - Start here if workflows are currently failing
   - Step-by-step instructions with direct links
 
-### 🔧 Troubleshooting
+### [?] Troubleshooting
 
 - **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Comprehensive troubleshooting guide
   - Authentication failures
@@ -18,7 +18,7 @@ This directory contains documentation for troubleshooting and configuring the xm
   - Token expiration prevention
   - Security best practices
 
-### 🔐 Configuration
+### [*] Configuration
 
 - **[SECRETS.md](./SECRETS.md)** - Complete secrets and configuration reference
   - All required GitHub secrets
@@ -28,49 +28,34 @@ This directory contains documentation for troubleshooting and configuring the xm
 
 ## Common Issues
 
-### ❌ Workflows Failing with Authentication Errors
-
-**Symptom**: Errors like "fatal: could not read Username for 'https://github.com'"
-
-**Solution**: See [QUICK_FIX.md](./QUICK_FIX.md)
-
-**Root Cause**: Expired or invalid `BOT_GITHUB_PAT` secret
-
-### ❌ Docker Build Failures
-
-**Symptom**: Build workflow fails during Docker Hub push
-
-**Solution**: Check `DOCKER_HUB_USERNAME` and `DOCKER_HUB_ACCESS_TOKEN` in [SECRETS.md](./SECRETS.md)
-
-### ❌ Deployment Not Working
-
-**Symptom**: Deployment workflow fails to connect to Docker Swarm
-
-**Solution**: Verify all swarm-related secrets in [SECRETS.md](./SECRETS.md)
+- **Authentication Errors** - See [QUICK_FIX.md](./QUICK_FIX.md) for expired `BOT_GITHUB_PAT`
+- **Docker Build Failures** - Check Docker Hub credentials in [SECRETS.md](./SECRETS.md)
+- **Deployment Issues** - Verify swarm secrets in [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+- **Other Problems** - Full troubleshooting in [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
 
 ## Workflow Overview
 
 The repository uses 4 main workflows:
 
 1. **Update XMage Version** (`.github/workflows/update_version.yml`)
-   - Runs daily at 7 PM UTC
+   - Schedule: Daily at 19:00 UTC (cron: "0 19 * * *")
    - Checks for new XMage beta versions
    - Creates version tags automatically
    - Triggers Docker build
 
 2. **Build Docker Image** (`.github/workflows/docker-publish.yml`)
-   - Runs when new tags are pushed
+   - Trigger: When new tags are pushed
    - Builds Docker images
    - Publishes to Docker Hub
    - Triggers deployment
 
 3. **Deploy to Docker Swarm** (`.github/workflows/deploy-to-swarm.yml`)
-   - Triggered after successful build
+   - Trigger: After successful build or manual dispatch
    - Updates running Docker Swarm stack
-   - Can be manually triggered
+   - Can be manually triggered for specific tags
 
 4. **Keep Actions Alive** (`.github/workflows/keep-alive.yml`)
-   - Runs weekly on Sundays
+   - Schedule: Weekly on Sundays at 12:00 UTC (cron: "0 12 * * 0")
    - Prevents workflow deactivation due to inactivity
    - Creates keep-alive commits if needed
 
