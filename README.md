@@ -55,3 +55,22 @@ If you like to preserve the database during updates and restarts you can mount a
 ## Client
 
 You can download the latest beta version of xmage at http://xmage.today
+
+## Automation & Configuration
+
+This repository includes automated workflows for:
+- **Version Updates**: Automatically checks for new XMage beta versions and creates tags
+- **Docker Builds**: Builds and publishes Docker images to Docker Hub when new versions are tagged
+- **Deployment**: Automatically deploys updates to a Docker Swarm cluster
+
+### Documentation
+
+- **[Required Secrets Configuration](./docs/SECRETS.md)** - Complete guide to setting up GitHub secrets for automation
+- **[Troubleshooting Guide](./docs/TROUBLESHOOTING.md)** - Solutions for common workflow and authentication issues
+
+### Quick Fix for Authentication Issues
+
+If you see workflow failures with authentication errors:
+1. The `BOT_GITHUB_PAT` secret has likely expired
+2. Follow the [Troubleshooting Guide](./docs/TROUBLESHOOTING.md) to generate and update the token
+3. Go to [Repository Settings → Secrets](https://github.com/Klastic/xmage-beta-docker/settings/secrets/actions) to update it
